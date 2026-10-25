@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banderazo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Saira+Condensed:ital,wght@0,600;1,800&display=swap">
+<style>
+:root{--bg:#0d1611;--panel:#15231b;--ink:#eef4ea;--muted:#9db3a3;--flag:#ffd23f;--orange:#ff7a2b;--line:rgba(238,244,234,.14);color-scheme:dark}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Barlow",system-ui,sans-serif;display:grid;place-items:center;padding:24px 16px;box-sizing:border-box}
+main{max-width:420px;width:100%;display:grid;gap:18px}
+.eyebrow{font:600 13px/1 "Saira Condensed",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1{font:italic 800 64px/.9 "Saira Condensed","Arial Narrow",sans-serif;text-transform:uppercase;margin:0;display:flex;align-items:center;gap:12px}
+h1 span{display:inline-block;width:14px;height:44px;background:var(--flag);transform:skewX(-12deg);border-radius:2px}
+p{margin:0;color:var(--muted);line-height:1.45}
+a.card{display:grid;gap:4px;padding:18px;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--ink);text-decoration:none}
+a.card:hover,a.card:focus-visible{border-color:var(--flag);outline:none}
+a.card b{font:800 28px/1 "Saira Condensed",sans-serif;text-transform:uppercase;color:var(--flag)}
+a.card.alt b{color:var(--orange)}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Flag football · 5 contra 5</div>
+  <h1>Banderazo<span></span></h1>
+  <p>Ataca, defiende y diseña tus propias jugadas. Funciona en el celular y en el computador.</p>
+  <a class="card" href="banderazo-2d.html"><b>Versión 2D</b><p>Vista desde arriba, clara y rápida.</p></a>
+  <a class="card alt" href="banderazo-3d.html"><b>Versión 3D</b><p>Cámara detrás del QB en un estadio de noche.</p></a>
+</main>
+</body>
+</html>
