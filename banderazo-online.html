@@ -288,6 +288,7 @@ addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;joy=null});
 
 // ---------- Online flow (host runs the game, guest sends input) ----------
+const PLAYCLOCK=30;
 const NET={role:null,ok:false,code:'',send:()=>{},peer:null,conn:null};
 const G={v:null};
 let NETT=null,lobbyOpen=true,ovShown=-1,uiKey='',lastSnap=0,lastInKey='',lastInT=0,celebratedId=-1;
@@ -298,7 +299,7 @@ const isHost=()=>NET.role==='host';
 
 // ----- selection -----
 function toSelect(){
-  setupFormation();S.pick={off:null,def:null};S.pickF=[false,false];
+  setupFormation();S.pick={off:null,def:null};S.pickF=[false,false];S.pc=PLAYCLOCK;
   S.phase='select';S.msg=S.msgB=null;updateBoard();
 }
 function renderSheet(){
@@ -372,12 +373,13 @@ function msgFor(D,R){
   else if(k==='inc'){t='Incompleto';s=D?(R.defl?'¡Buena cobertura!':'El pase no llegó'):(R.defl?'El defensor lo desvió':'No llegó a tu receptor')}
   else if(k==='sack'){t='¡Captura!';s=D?'Le quitaste la bandera al QB':'Te arrancaron la bandera'}
   else if(k==='clock'){t='Reloj de pase agotado';s=D?'El rival pierde el down':'Pierdes el down'}
+  else if(k==='delay'){t='Retraso de juego';s=D?'Castigo al rival: 5 yardas atrás':'Castigo: 5 yardas atrás, se repite el down'}
   else if(k==='safety'){t='¡Safety!';s=D?'Sumas 2 puntos':'Te frenaron en tu propia zona'}
   else if(k==='gain'){
     t=R.oob?'Fuera del campo':(D?(R.g>=0?`El rival gana ${R.g} yd`:`El rival pierde ${-R.g} yd`):(R.g>=0?`Ganancia de ${R.g} yd`:`Pérdida de ${-R.g} yd`));
     s=R.first?(D?'Primer down del rival: 4 intentos para anotar':'¡Primer down! Ahora 4 intentos para anotar'):(D&&R.pull?'¡Le quitaste la bandera!':'');
   }
-  if(R.pat&&k!=='td')s=D?'Paraste la conversión':'Conversión fallida';
+  if(R.pat&&k!=='td'&&k!=='delay')s=D?'Paraste la conversión':'Conversión fallida';
   return{title:t,sub:s};
 }
 function endPlay(kind,spot,info){
@@ -388,6 +390,7 @@ function endPlay(kind,spot,info){
 }
 function resolve(){
   const {kind,spot}=S.res;S.msg=S.msgB=null;
+  if(kind==='delay'){S.los=Math.max(1,S.los-5);return toSelect()}
   const addOff=n=>{if(S.side==='off')S.score.me+=n;else S.score.cpu+=n;S.drivePts+=n};
   if(S.mode==='pat'){if(kind==='td')addOff(S.patPts);return endDrive(kind==='td'?'patok':'patfail',S.patPts)}
   if(kind==='td'){addOff(6);updateBoard();return showPat()}
@@ -406,6 +409,13 @@ function reasonTxt(D,code,n){
     safety:D?'Safety: sumas 2 puntos':'Safety: el rival suma 2',
     downs1:D?'Lo paraste antes de medio campo':'No cruzaste medio campo en 4 downs',
     downs2:D?'Lo paraste en 4 downs':'No anotaste en 4 downs'}[code]||'';
+}
+function drawPlayClock(){
+  const left=Math.max(0,S.pc||0),f=left/PLAYCLOCK;
+  ctx.fillStyle='rgba(13,22,17,.75)';rr(10,10,W-20,22,6);ctx.fill();
+  ctx.fillStyle=left<6?'#ff5a4a':'#9fb0ff';rr(13,13,(W-26)*f,16,4);ctx.fill();
+  ctx.font='700 12px Barlow,sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillStyle=f>.35?'#0d1611':'#eef4ea';ctx.fillText(`Reloj de juego ${Math.ceil(left)} s · ${isD()?'el rival debe dar el snap':'da el snap a tiempo'}`,20,21);
 }
 function setOv(o){S.ov=o;S.ovid++;renderOv()}
 function endDrive(code,n){
@@ -477,6 +487,10 @@ function refreshUI(){
 function updateNet(dt){
   const ph=S.phase,q=S.qb,hostOff=S.side==='off';
   const offV=hostOff?inputVec():G.v,defV=hostOff?G.v:inputVec(),C=S.ctrl;
+  if((ph==='select'||ph==='presnap')&&NET.ok){
+    S.pc-=dt;
+    if(S.pc<=0){if(!S.pickF[1])hostPick('def',0);if(S.phase!=='live')endPlay('delay',S.los);return}
+  }
   const moveCtrl=()=>{if(!C)return;if(defV){C.x=clamp(C.x+defV.x*7.2*dt,.5,24.5);C.y=clamp(C.y+defV.y*7.2*dt,-9,59.5);C.vx=defV.x*7.2;C.vy=defV.y*7.2}else{C.vx=C.vy=0}};
   if(ph==='live'){
     if(offV){q.x=clamp(q.x+offV.x*5.5*dt,1,24);q.y=clamp(q.y+offV.y*5.5*dt,S.los-9,S.los-1)}
@@ -523,7 +537,7 @@ function updateNet(dt){
 const R2=v=>Math.round(v*100)/100;
 function snapshot(){
   const b=S.ball;
-  const o={t:'s',ph:S.phase,sd:S.side,los:R2(S.los),dn:S.down,tg:S.target,md:S.mode,pp:S.patPts,dr:S.drive,sc:[S.score.me,S.score.cpu],tt:R2(S.t),
+  const o={t:'s',ph:S.phase,sd:S.side,los:R2(S.los),dn:S.down,tg:S.target,md:S.mode,pp:S.patPts,dr:S.drive,sc:[S.score.me,S.score.cpu],tt:R2(S.t),pc:R2(S.pc||0),
     q:[R2(S.qb.x),R2(S.qb.y),S.qb.flags],r:S.recs.map(r=>[R2(r.x),R2(r.y),r.flags]),d:S.defs.map(d=>[R2(d.x),R2(d.y)]),
     b:b?{s:b.state,x:R2(b.x),y:R2(b.y),h:R2(b.h||0),T:b.T?[R2(b.T.x),R2(b.T.y)]:null,x0:b.x0!=null?R2(b.x0):null,y0:b.y0!=null?R2(b.y0):null}:null,
     ca:S.recs.indexOf(S.carrier),pu:S.defs.indexOf(S.pulled),msg:S.msgB,ctl:S.defs.indexOf(S.ctrl),pk:S.pickF,ov:S.ov,ovid:S.ovid};
@@ -533,7 +547,7 @@ function snapshot(){
 function applySnap(m){
   if(!S.recs.length||!S.defs.length){S.los=m.los;setupFormation()}
   S.phase=m.ph;S.side=m.sd==='off'?'def':'off';S.los=m.los;S.down=m.dn;S.target=m.tg;S.mode=m.md;S.patPts=m.pp;S.drive=m.dr;
-  S.score={me:m.sc[1],cpu:m.sc[0]};S.t=m.tt;S.pickF=m.pk||[false,false];S.msg=m.msg||null;
+  S.score={me:m.sc[1],cpu:m.sc[0]};S.t=m.tt;S.pc=m.pc;S.pickF=m.pk||[false,false];S.msg=m.msg||null;
   NETT={q:m.q,r:m.r,d:m.d,b:m.b};
   S.qb.flags=m.q[2];m.r.forEach((a,i)=>{if(S.recs[i])S.recs[i].flags=a[2]});
   if(m.b){
@@ -870,6 +884,7 @@ function draw(){
     drawPlayer(S.qb,DD?'#1f2a5e':'#e8641a',DD?'#c3ceff':'#fff1e6','QB',S.qb.flags,null);
     drawBall();
     if(S.phase==='live'||S.phase==='air')drawClock();
+    else if(NET.ok&&(S.phase==='select'||S.phase==='presnap'))drawPlayClock();
     if(joy&&joy.moved&&(live||S.phase==='run'||(DD&&S.phase!=='dead'))){
       ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(joy.sx,joy.sy,45,0,7);ctx.stroke();
       const dx=joy.cx-joy.sx,dy=joy.cy-joy.sy,l=Math.hypot(dx,dy),m=Math.min(l,45);

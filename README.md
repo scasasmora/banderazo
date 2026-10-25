@@ -14,7 +14,7 @@ Juego de flag football 5 contra 5 para el navegador, en versión 2D y 3D.
 
 ## Online 1 contra 1
 
-En `banderazo-online.html` (2D) o `banderazo-3d-online.html` (3D), un jugador toca **Crear partida** y comparte el código de 4 letras; el otro lo escribe en **Unirse**. Se turnan en ataque y defensa, y ninguno ve la jugada que eligió el otro hasta el snap. La conexión es directa entre los dos dispositivos (PeerJS); en algunas redes muy restringidas puede fallar, en ese caso prueben con otro wifi.
+En `banderazo-online.html` (2D) o `banderazo-3d-online.html` (3D), un jugador toca **Crear partida** y comparte el código de 4 letras; el otro lo escribe en **Unirse**. Se turnan en ataque y defensa, y ninguno ve la jugada que eligió el otro hasta el snap. Hay un reloj de juego de 30 segundos: si la defensa no elige, juega hombre a hombre; si el ataque no da el snap a tiempo, recibe 5 yardas de castigo por retraso de juego. La conexión es directa entre los dos dispositivos (PeerJS); en algunas redes muy restringidas puede fallar, en ese caso prueben con otro wifi.
 
 Con teclado: flechas para moverte, 1–4 para lanzar, espacio para ¡Hut!
 
